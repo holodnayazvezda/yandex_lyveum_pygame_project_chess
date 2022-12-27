@@ -10,17 +10,17 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
     def char(self):
         return 'Q'
 
-    def can_move(self, row1, col1, board):
+    def can_move(self, row1, col1, board):  # board - это объект класса board, а board.board - это двумерный массив клеток
         if not (0 <= row1 < 8 and 0 <= col1 < 8):
             return [False]
         if self.row == row1 and self.col == col1:
             return [False]
         to_return = [False]
-        if (board[row1][col1] is None or board[row1][col1].color != self.color) and not isinstance(board[row1][col1],
+        if (board.board[row1][col1] is None or board.board[row1][col1].color != self.color) and not isinstance(board.board[row1][col1],
                                                                                                    King.King):
             can = []
             for x in range(self.row + 1, 8):
-                d = board[x][self.col]
+                d = board.board[x][self.col]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -30,7 +30,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
                     break
                 can.append((x, self.col))
             for x in range(self.row - 1, -1, -1):
-                d = board[x][self.col]
+                d = board.board[x][self.col]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -40,7 +40,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
                     break
                 can.append((x, self.col))
             for y in range(self.col + 1, 8):
-                d = board[self.row][y]
+                d = board.board[self.row][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -50,7 +50,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
                     break
                 can.append((self.row, y))
             for y in range(self.col - 1, -1, -1):
-                d = board[self.row][y]
+                d = board.board[self.row][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -63,7 +63,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
             x, y = self.row, self.col
             while x < 7 and y < 7:
                 x, y = x + 1, y + 1
-                d = board[x][y]
+                d = board.board[x][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -75,7 +75,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
             x, y = self.row, self.col
             while x < 7 and y > 0:
                 x, y = x + 1, y - 1
-                d = board[x][y]
+                d = board.board[x][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -87,7 +87,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
             x, y = self.row, self.col
             while x > 0 and y < 7:
                 x, y = x - 1, y + 1
-                d = board[x][y]
+                d = board.board[x][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -99,7 +99,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
             x, y = self.row, self.col
             while x > 0 and y > 0:
                 x, y = x - 1, y - 1
-                d = board[x][y]
+                d = board.board[x][y]
                 if d:
                     if d.get_color() == self.get_color():
                         break
@@ -111,7 +111,7 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
 
             if (row1, col1) in can:
                 to_return[0] = True
-                if board[row1][col1] is not None:
+                if board.board[row1][col1] is not None:
                     to_return.append(TAKE_MOVE)
                 else:
                     to_return.append(NORMAL_MOVE)

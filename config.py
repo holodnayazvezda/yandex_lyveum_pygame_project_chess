@@ -9,3 +9,4 @@ TAKE_MOVE = 'take'
 CONVERSION_MOVE = 'conversion'
 PASSED_TAKE_MOVE = 'passed_take'
 CASTLING_MOVE = 'castling'
+OPPONENT_COLOR = {WHITE: BLACK, BLACK: WHITE}
