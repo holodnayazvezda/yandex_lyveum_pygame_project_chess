@@ -66,6 +66,10 @@ class Move:
                 board.board[self.row][self.basic_taken_figure_col - 2] = self.taken_figure  # поставили ладью на 5 столбец (ВАЖНО!!! БЕРЕМ COL ЛАДЬИ (taken_figure), а не КОРОЛЯ!!!)
                 self.taken_figure.col = self.basic_taken_figure_col - 2  # ладья стала на 5 столбец (ВАЖНО!!! БЕРЕМ COL ЛАДЬИ (taken_figure), а не КОРОЛЯ!!!)
             board.board[self.basic_taken_figure_row][self.basic_taken_figure_col] = None  # убрали ладью с прежнего места
+        converted_board = []
+        for row in board.board:
+            converted_board += row
+        board.positions.append(converted_board)  # добавляем новую позицию в список позиций
         # TODO: не уберу, пока не буду уверен, что все работает идеально (а пока - реализовать для всех остальных типов)
 
     def undo_move(self, board):
@@ -112,4 +116,5 @@ class Move:
             board.board[self.basic_taken_figure_row][self.taken_figure.col] = None  # убираем фигуру (ЛАДЬЮ!) с места, на которое она ходила
             self.taken_figure.row = self.basic_taken_figure_row  # фигура вернулась на место, с которого она ходила
             self.taken_figure.col = self.basic_taken_figure_col  # фигура вернулась на место, с которого она ходила
+        board.positions.pop()
         # TODO: не уберу, пока не буду уверен, что все работает идеально (а пока - реализовать для всех остальных типов)

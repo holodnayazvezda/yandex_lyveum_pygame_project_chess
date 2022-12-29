@@ -10,7 +10,10 @@ class Button():
         self.y = y
         self.width = width
         self.height = height
-        self.onclickFunction = lambda: onclickFunction(value)
+        if not value:
+            self.onclickFunction = lambda: onclickFunction()
+        else:
+            self.onclickFunction = lambda: onclickFunction(value)
         self.onePress = onePress
 
         self.fillColors = {

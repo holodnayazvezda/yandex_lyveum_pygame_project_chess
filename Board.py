@@ -13,6 +13,7 @@ class Board:
         self.board = []
         self.all_figures = {1: [], 0: []}  # словарь всех фигур 1 - белые фигуры, 0 - черные фигуры
         self.all_moves = []  # список всех ходов, в нем лежат объекты класса Move
+        self.positions = []  # список всех позиций доски объект класса list (board.board)
         # генерируем доску по рядам (затем перевернем так как 0 ряд здесь - это седьмой в игре)
         for amount_of_row in range(8):
             row = []  # ряды
@@ -79,6 +80,26 @@ class Board:
         # вызвать under_attack для всех фигур противника
         return self.under_attack(king.row, king.col, color)
 
+    def check_triple_repetition_of_a_position(self):  # проверка на тройное повторение позиции (по правилам шахмат
+        # если одинаковая позиция повторилась 3 раза, то автоматически ничья)
+        last_position = self.positions[-1]
+        count = 0
+        for position in self.positions[:-1]:
+            match_counter = 0
+            for iter in zip(last_position, position):  # сравниваем две позиции 0 - текущая, 1 - предыдущая
+                # print(iter)
+                if iter[0] is None and iter[1] is None:
+                    match_counter += 1
+                elif iter[0] is not None and iter[1] is not None:
+                    if iter[0].color == iter[1].color and iter[0].name == iter[1].name:
+                        match_counter += 1
+            if match_counter == 64:
+                count += 1
+        if count == 2:
+            return True
+        return False
+
+
     @staticmethod
     def create_queen_for_pawn(row, col, color):
         return Queen(row, col, color)
@@ -103,6 +124,15 @@ class Board:
             return True
         return False
 
+    def check_fifty_moves_rule(self):  # проверка на правило 50 ходов в шахматах (если за 50 ходов не было ни одного
+        # взятия и ни одна пешка не сходила, то фиксируется ничья)
+        if len(self.all_moves) >= 100:
+            for move in self.all_moves[-100:]:
+                if type(move.figure) == Pawn or move.type_of_move == TAKE_MOVE:
+                    return False
+            return True
+        return False
+
     def print_board(self):
         for row in self.board:
             string_to_print = '|'
@@ -116,10 +146,15 @@ class Board:
 
 if __name__ == '__main__':
     board = Board(0)  # создаем доску белые фигуры
+    board1 = Board(0)  # создаем доску черные фигуры
+    x = board.board
+    y = board1.board
+    print(x == y)
     board.print_board()
+    board1.print_board()
     # for move in board.board[1][0].get_all_moves(board):
     #     print(move)
-    print(board.under_attack(7, 7, BLACK))
-    print(board.check_check(BLACK))
-    print(board.check_check(WHITE))
-    print(len(board.check_mat(WHITE)))
+    # print(board.under_attack(7, 7, BLACK))
+    # print(board.check_check(BLACK))
+    # print(board.check_check(WHITE))
+    # print(len(board.check_mat(WHITE)))

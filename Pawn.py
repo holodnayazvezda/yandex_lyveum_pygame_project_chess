@@ -27,7 +27,6 @@ class Pawn(Figure):   # наследуемся от класса Sprite для �
         if (row == self.row + direction or (row == self.row + (direction * 2) and self.row == start_row and
                                             board.board[self.row + direction][col] is None)) and col == self.col and \
                 board.board[row][col] is None:  # 1 проверка на то, что ход вперед и на клетки нет другой фигуры
-            print("normal move")
             to_return[0] = True
             if row != transformation_row:
                 to_return.append(NORMAL_MOVE)

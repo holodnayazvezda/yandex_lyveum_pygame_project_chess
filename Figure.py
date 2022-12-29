@@ -46,13 +46,12 @@ class Figure(pygame.sprite.Sprite):
                         if board.check_check(self.color):  # проверка на шах при рокировке
                             continue
                         moves.append(self.create_castling_move(amount_of_row, amount_of_col, board))
-                    if board.check_check(self.color):  # если есть шах
-                        print('check')
-                        now_move = moves[-1]  # выбираем последний ход
-                        now_move.apply_move(board)  # применяем ход
-                        if board.check_check(self.color):  # если после применения хода шах остался, то
-                            moves.pop()  # удаляем ход из списка (если шаха нет, то ход остается)
-                        now_move.undo_move(board)  # в любом случае отменяем ход
+                    # проверка на шах после хода (если он есть, или еслм он появляется после хода)
+                    now_move = moves[-1]  # выбираем последний ход
+                    now_move.apply_move(board)  # применяем ход
+                    if board.check_check(self.color):  # если после применения хода есть шах, то
+                        moves.pop()  # удаляем ход из списка (если шаха нет, то ход остается)
+                    now_move.undo_move(board)  # в любом случае отменяем ход
         return moves
 
     def create_normal_move(self, new_row, new_col):
