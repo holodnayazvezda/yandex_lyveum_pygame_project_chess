@@ -62,14 +62,35 @@ class Board:
             if isinstance(figure, King):
                 return figure
 
+    def check_kings_around(self, row, col, color):   # это функция для проверки, ести ли в радиусе +-=1 клетки.
+        # Возвращает True, если есть
+        for row_coefficent in [1, 0, -1]:
+            for col_coefficent in [1, 0, -1]:
+                new_row = row + row_coefficent
+                new_col = col + col_coefficent
+                if 0 <= new_row < 8 and 0 <= new_col < 8:
+                    try:
+                        if self.board[new_row][new_col] is not None:  # проверка на то, что клетка не пустая
+                            if self.board[new_row][new_col].name == 'King' and \
+                                    self.board[new_row][new_col].color != color:  # проверка на то, что в клетке
+                                # король другого цвета
+                                return True
+                    except IndexError:
+                        pass
+        return False
+
     def under_attack(self, row, col, color):  # проврерка на атаку клетки с координатами row, col цветом color
-        current_figure = self.board[row][col]  # запоминаем фигуру которая стоит на клетке
+        current_figure = self.board[row][col]  # запоминаем фигуру, которая стоит на клетке
         self.board[row][col] = TempFigure(row, col, color)  # ставим временную фигуру на клетку, для адекватной
         # проверки на атаку
         for figure in self.all_figures[OPPONENT_COLOR[color]]:
-            result = figure.can_move(row, col, self)  # возвращает массив - первый элемент - булевое значение (может
+            if type(figure) != King:
+                result = figure.can_move(row, col, self)  # возвращает массив - первый элемент - булевое значение (может
+            else:
+                result = [0]  # один элемент для общей проверки
             # ходить или нет), а второ1 - тип хода
-            if result[0]:
+            if result[0] or self.check_kings_around(row, col, color):  # если фигура может ходить на клетку или
+                # король может ходить на клетку
                 self.board[row][col] = current_figure
                 return True
         self.board[row][col] = current_figure

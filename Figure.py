@@ -43,7 +43,7 @@ class Figure(pygame.sprite.Sprite):
                                 amount_of_row + (-1 if self.color == WHITE else 1)][amount_of_col])
                         )
                     if result[1] == CASTLING_MOVE:
-                        if board.check_check(self.color):  # проверка на шах при рокировке
+                        if board.under_attack(board.get_king(self.color).row, board.get_king(self.color).col, self.color):  # проверка на шах при рокировке
                             continue
                         moves.append(self.create_castling_move(amount_of_row, amount_of_col, board))
                     # проверка на шах после хода (если он есть, или еслм он появляется после хода)

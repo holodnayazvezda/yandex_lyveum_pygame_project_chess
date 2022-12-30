@@ -7,10 +7,11 @@ from background import Background
 from button import Button
 from Board import Board
 from config import OPPONENT_COLOR
+from inputbox import InputBox
 
 
 class Game:
-    def __init__(self, color, white_name, black_name):
+    def __init__(self, color):
         # инициализируем необходимые переменные
         self.background = Background('images/fon.jpg', [0, 0])  # создаем фон
         self.player_color = None  # цвет игрока
@@ -19,7 +20,9 @@ class Game:
         self.font = None  # создаем шрифт
         self.width, self.height = 800, 800  # размеры окна
         self.main_surface = None  # создаем главное окно
+        self.players_name_surface = None  # создаем окно для ввода имени игроков
         self.game_surface = None  # создаем окно игры
+        self.before_mode = None  # создаем переменную для хранения предыдущего режима
         self.game_mode = None  # режим игры
         self.selected_figure = None  # выбранная фигура
         self.avl_moves = []  # доступные ходы
@@ -36,22 +39,63 @@ class Game:
         self.player_dict = {}
         self.draw = False
         self.mate = False
-        self.main(color, white_name, black_name)
+        self.input_boxes = []
+        self.main(color)
 
     def reset_coords(self):
         self.coords_before_move = None
         self.coords_after_move = None
 
-    def change_game_mode(self, mode):
+    def change_game_mode(self, mode, another_func=False):  # функция смены режима игры
+        self.before_mode = self.game_mode
         self.game_mode = mode
-        self.sound_of_end_or_start_of_the_game.play()
+        if self.game_mode == 2 or self.game_mode == 3:
+            if not self.msg:
+                self.mode2()
+            else:
+                self.game_mode = self.before_mode
+        elif self.game_mode == 1:
+            self.mode1()
+        elif self.game_mode == 0:
+            self.main(1)
+        elif self.game_mode == 5:
+            if not self.draw and not self.mate and not self.board.check_mat(self.player_color) and not \
+                    self.board.check_pat(self.player_color):
+                self.mode5(another_func)
+            else:
+                self.game_mode = self.before_mode
+
+
+    def mode1(self):
+        # создаем список с полями ввода для удобства обработки
+        self.input_boxes = [InputBox(380, 244, 140, 32), InputBox(380, 344, 140, 32)]
+        # создаем кнопку для начала игры и помещаем ее в список элементов для обработки
         self.elements = [
-            Button(self.main_surface, 56, 750, 208, 44, 'Сдаться', self.declare_a_mate, None, False, 'Arial', 20),
-            Button(self.main_surface, 296, 750, 208, 44, 'Объявить ничью', self.declare_a_draw, None, False,
-                   'Arial', 20),
-            Button(self.main_surface, 536, 750, 208, 44, 'Отменить ход', self.back, None, False, 'Arial',
-                   20)]  # создаем кнопки
-        # для игры
+            Button(self.main_surface, 100, 550, 200, 100, "<- Назад", self.change_game_mode, 0, False),
+            Button(self.main_surface, 500, 550, 200, 100, "Далее ->", self.change_game_mode, 2, False)
+        ]
+
+    def mode2(self):
+        # создаем кнопки
+        self.elements = [
+            Button(self.main_surface, 90, 675, 200, 50, 'Сдаться', self.declare_a_mate, None, False, 'Arial', 25),
+            Button(self.main_surface, 310, 675, 200, 50, 'Объявить ничью', self.declare_a_draw, None, False,
+                   'Arial', 25),
+            Button(self.main_surface, 530, 675, 200, 50, 'Отменить ход', self.back, None, False, 'Arial',
+                   25),
+            Button(self.main_surface, 90, 740, 640, 50, "<- Назад", self.change_game_mode, 5, False, 'Arial', 30)]
+        self.white_player_name = self.input_boxes[0].text  # получаем имя белого игрока
+        self.black_player_name = self.input_boxes[1].text  # получаем имя черного игрока
+        self.player_dict = {1: self.white_player_name, 0: self.black_player_name}  # обновляем словарь с именами игроков
+        self.sound_of_end_or_start_of_the_game.play()
+
+    def mode5(self, another_func):
+        self.elements = [
+            Button(self.main_surface, 100, 550, 200, 100, "Да", self.change_game_mode, 0, False),
+            Button(self.main_surface, 500, 550, 200, 100, "Нет", self.change_game_mode, self.before_mode, False)
+        ]
+        if another_func:
+            self.elements[0] = Button(self.main_surface, 100, 550, 200, 100, "Да", exit, None, False)
 
     def change_player_color(self, color):  # функция смены цвета игрока которая вызывается кнопкой
         self.player_color = color
@@ -62,7 +106,7 @@ class Game:
             self.draw = True
             self.msg = 'Ничья! Достигнута ничья!'
             self.sound_of_end_or_start_of_the_game.play()
-            self.game_mode = 4
+            self.game_mode = 6
 
     def declare_a_mate(self):
         if not self.mate and not self.draw and not self.board.check_mat(self.player_color) and not \
@@ -71,7 +115,7 @@ class Game:
             self.msg = 'Игрок ' + self.player_dict[self.player_color] + ' сдался! Игрок ' + \
                        self.player_dict[OPPONENT_COLOR[self.player_color]] + ' победил!'
             self.sound_of_end_or_start_of_the_game.play()
-            self.game_mode = 4
+            self.game_mode = 6
 
     def back(self):
         if not self.mate and not self.draw and not self.board.check_mat(self.player_color) and not \
@@ -90,7 +134,7 @@ class Game:
                 self.selected_figure = None
                 self.avl_moves = []
 
-    def main(self, player_side, white_name, black_name):
+    def main(self, player_side):
         self.game_mode = 0
         # инициализируем pygame
         pygame.init()
@@ -113,9 +157,7 @@ class Game:
         self.board = Board(self.player_color)
         # создаем шрифт
         self.font = pygame.font.SysFont('Arial', 20)
-        # инициализируем игроков
-        self.white_player_name = white_name
-        self.black_player_name = black_name
+        # TODO: инициализация имен игроков будет доделана позже
         # инициализируем словарь игроков
         self.player_dict = {1: self.white_player_name, 0: self.black_player_name}
         # инициализируем остальные координаты
@@ -129,10 +171,14 @@ class Game:
             for event in pygame.event.get():
                 # обрабатываем события
                 if event.type == pygame.QUIT:
-                    exit()
+                    if self.game_mode == 2 or self.game_mode == 3:
+                        self.change_game_mode(5, True)
+                    else:
+                        exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:  # если нажата не левая кнопка мыши, то ничего не делаем при нажатой кнопке в режиме 1 разрешен только выбор фигуры
-                        if self.game_mode == 1:
+                    if event.button == 1:  # если нажата не левая кнопка мыши, то ничего не делаем при нажатой кнопке
+                        # в режиме 1 разрешен только выбор фигуры
+                        if self.game_mode == 2:
                             if self.selected_figure:
                                 figure = self.get_selected_figure(event)
                                 # print(figure)
@@ -148,9 +194,9 @@ class Game:
                             else:
                                 self.avl_moves = []
                             if self.avl_moves:
-                                self.game_mode = 2
+                                self.game_mode = 3
                                 continue
-                        if self.game_mode == 2:
+                        if self.game_mode == 3:
                             # print('ready_to_find')
                             result = self.get_mouse_selected_cell(event)
                             if result is not None:
@@ -160,7 +206,7 @@ class Game:
                                         if self.board.board[selected_row][
                                             selected_col] == self.selected_figure:  # если выбрана та же
                                             # фигура (пользователь еще раз нажал по ней)
-                                            self.game_mode = 1
+                                            self.game_mode = 2
                                             self.avl_moves = []
                                             self.selected_figure = None
                                             continue
@@ -177,49 +223,49 @@ class Game:
                                         else:
                                             self.sound_of_normal_move.play()
                                         move.apply_move(self.board)
-                                        print(self.board.check_triple_repetition_of_a_position())
+                                        # print(self.board.check_triple_repetition_of_a_position())
                                         # записываем координаты хода
                                         self.coords_before_move = (move.basic_row, move.basic_col)
                                         self.coords_after_move = (move.row, move.col)
                                         self.selected_figure = None
                                         self.avl_moves = []
-                                        self.game_mode = 1
+                                        self.game_mode = 2
                                         self.change_player_color(config.OPPONENT_COLOR[self.player_color])
                                         if self.board.check_mat(self.player_color):
                                             self.msg = 'Шах и мат! Победил(а) игрок ' + self.player_dict[
                                                 config.OPPONENT_COLOR[self.player_color]] + '!'
-                                            self.game_mode = 4
+                                            self.game_mode = 6
                                             pygame.time.wait(
                                                 250)  # добавляем задержку, чтобы звук совершения хода успел
                                             # проиграться
                                             self.sound_of_end_or_start_of_the_game.play()
                                         elif self.board.check_pat(self.player_color):
                                             self.msg = 'Пат! Достигнута ничья!'
-                                            self.game_mode = 4
+                                            self.game_mode = 6
                                             pygame.time.wait(
                                                 250)  # добавляем задержку, чтобы звук совершения хода успел
                                             # проиграться
                                             self.sound_of_end_or_start_of_the_game.play()
                                         elif self.board.check_triple_repetition_of_a_position():
                                             self.msg = 'Ничья! Троекратное повторение позиции!'
-                                            self.game_mode = 4
+                                            self.game_mode = 6
                                             pygame.time.wait(250)
                                             self.sound_of_end_or_start_of_the_game.play()
                                         elif self.board.check_fifty_moves_rule():
                                             self.msg = 'Ничья! Правило пятидесяти ходов!'
-                                            self.game_mode = 4
+                                            self.game_mode = 6
                                             pygame.time.wait(250)
                                             self.sound_of_end_or_start_of_the_game.play()
                     if event.button == 3:
-                        if self.game_mode == 4:
-                            self.main(1, 'Денистон', 'Красавчик')
+                        if self.game_mode == 6:
+                            self.main(1)
                     if event.button == 4:
                         config.recount_coefficent_and_length_of_divider(2)
                     if event.button == 5:
                         config.recount_coefficent_and_length_of_divider(-2)
                     # TODO: ОСНОВНАЯ ЗАДАЧА - ПРОПИСАТЬ ВСЕ ОСТАЛЬНЫЕ РЕЖИМЫ РАБОТЫ ИГРЫ
                 if event.type == pygame.MOUSEMOTION:
-                    if self.game_mode == 2:
+                    if self.game_mode == 3:
                         self.mouse_move_selected_cell = self.get_mouse_selected_cell(event)
                         if self.mouse_move_selected_cell is not None:
                             if self.player_color == config.WHITE:
@@ -230,12 +276,30 @@ class Game:
                 # обрабатываем режимы игры
                 if self.game_mode == 0:
                     self.redraw_main_screen()
+                if self.game_mode == 1:
+                    self.redraw_players_name_screen(event)
+                if self.game_mode == 5:
+                    self.redraw_question_screen()
             # обновляем фон
             self.background.update()
-            if self.game_mode != 0:
+            if self.game_mode not in [0, 1, 5]:
                 self.redraw_game_screen()
             # обновляем окно
             pygame.display.flip()
+
+    # функция отрисовки экрана с вопросом о продолжении игры
+    def redraw_question_screen(self):
+        # отрисовываем фон
+        self.main_surface.blit(self.background.image, self.background.rect)  # отрисовываем фон
+        pygame.draw.rect(self.main_surface, (35, 25, 105), (100, 100, 600, 200))
+        font = pygame.font.Font(None, 51)
+        text = font.render('Вы уверены, что хотите выйти?', True, (255, 0, 0))
+        font = pygame.font.Font(None, 25)
+        text1 = font.render('Ваш соперник будет объявлен победителем, если вы покинете игру!', True, (255, 255, 255))
+        self.main_surface.blit(text, (130, 120))
+        self.main_surface.blit(text1, (112, 170))
+        for element in self.elements:
+            element.process()
 
     # функция отрисовки начального экрана
     def redraw_main_screen(self):
@@ -243,6 +307,28 @@ class Game:
         for element in self.elements:
             element.process()  # обрабатываем элементы
         pygame.display.flip()  # обновляем окно
+
+    def draw_players_name_screen(self):
+        # рисуем цветной прямоугольник под текст и поля ввода
+        pygame.draw.rect(self.main_surface, (35, 25, 95), (100, 100, 600, 400))
+        # рисуем текст
+        font = pygame.font.Font(None, 50)
+        text = font.render('Введите имена игроков', True, (255, 255, 255))
+        text_x = 100 + 600 // 2 - text.get_width() // 2
+        text_y = 100 + 50
+        self.main_surface.blit(text, (text_x, text_y))
+        # рисуем текст
+        font = pygame.font.Font(None, 30)
+        text = font.render('Имя игрока за белых', True, (255, 255, 255))
+        self.main_surface.blit(text, (162, 250))
+        # рисуем текст
+        font = pygame.font.Font(None, 30)
+        text = font.render('Имя игрока за черных', True, (255, 255, 255))
+        self.main_surface.blit(text, (150, 350))
+        if self.msg:
+            font = pygame.font.Font(None, 30)
+            text = font.render(self.msg, True, (255, 0, 0))
+            self.main_surface.blit(text, (175, 515))
 
     # функция отрисовки игрового экрана
     def redraw_game_screen(self):
@@ -508,6 +594,24 @@ class Game:
                                           // 2))
             pygame.display.update()
 
+    # функция отрисовки экрана ввода имени игроков
+    def redraw_players_name_screen(self, event):
+        self.main_surface.blit(self.background.image, self.background.rect)
+        for element in self.elements:
+            element.process()  # обрабатываем элементы)
+        self.draw_players_name_screen()
+        for input_box in self.input_boxes:
+            input_box.handle_event(event)
+            if len(input_box.text.replace(' ', '')) == 0:
+                self.msg = 'Поле "имя игрока" не может быть пустым!'
+            else:
+                self.msg = None
+        for input_box in self.input_boxes:
+            input_box.update()
+        for input_box in self.input_boxes:
+            input_box.draw(self.main_surface)
+        pygame.display.flip()
+
 
 if __name__ == '__main__':
-    game = Game(1, 'Даниил', 'Виктор')
+    game = Game(1)

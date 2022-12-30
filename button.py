@@ -10,16 +10,16 @@ class Button():
         self.y = y
         self.width = width
         self.height = height
-        if not value:
+        if not value and value != 0:
             self.onclickFunction = lambda: onclickFunction()
         else:
             self.onclickFunction = lambda: onclickFunction(value)
         self.onePress = onePress
 
         self.fillColors = {
-            'normal': '#ffffff',
-            'hover': '#666666',
-            'pressed': '#333333',
+            'normal': (210, 210, 210),
+            'hover': (100, 100, 100),
+            'pressed': (50, 50, 50),
         }
 
         self.buttonSurface = pygame.Surface((self.width, self.height))

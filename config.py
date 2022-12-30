@@ -24,6 +24,9 @@ CONVERSION_MOVE = 'conversion'
 PASSED_TAKE_MOVE = 'passed_take'
 CASTLING_MOVE = 'castling'
 OPPONENT_COLOR = {WHITE: BLACK, BLACK: WHITE}
+ENGLISH_ALPHABED = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+RUSSIAN_ALPHABED = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя"
+NUMBERS = '0123456789'
 
 
 recount_coefficent_and_length_of_divider(0)

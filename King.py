@@ -1,6 +1,7 @@
 from Figure import Figure
-from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE
+from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE, OPPONENT_COLOR
 from Rook import Rook
+from TempFigure import TempFigure
 
 
 class King(Figure):  # наследуемся от класса Sprite для того, чтобы хранить объекты в самом себе.
@@ -10,21 +11,7 @@ class King(Figure):  # наследуемся от класса Sprite для т
     def char(self):
         return 'K'
 
-    def check_kings_around(self, row, col, board):   # это функция для проверки, ести ли в радиусе +-=1 клетки.  Возвращает True, если есть
-        for row_coefficent in [1, 0, -1]:
-            for col_coefficent in [1, 0, -1]:
-                new_row = row + row_coefficent
-                new_col = col + col_coefficent
-                if 0 <= new_row < 8 and 0 <= new_col < 8:
-                    try:
-                        if board.board[new_row][new_col] is not None:  # проверка на то, что клетка не пустая
-                            if board.board[new_row][new_col].name == 'King' and board.board[new_row][new_col].color != self.color:  # проверка на то, что в клетке король другого цвета
-                                return True
-                    except IndexError:
-                        pass
-        return False
-
-    def can_move(self, row1, col1, board):
+    def can_move(self, row1, col1, board):  # функция для проверки, может ли король ходить в клетку row1, col1
         if not 0 <= row1 < 8 and 0 <= col1 < 8:
             return [False]
         if (board.board[row1][col1] is None or board.board[row1][col1].color != self.color) and not isinstance(
@@ -63,8 +50,8 @@ class King(Figure):  # наследуемся от класса Sprite для т
                         if row1 + i == self.row and col1 + j == self.col:  # если клетка рядом с королем (+- 1 клетка по всем осям)
                             if not board.under_attack(row1, col1, self.color):  # если клетка не атакуется (при ходе на нее не будет шаха)
                                 if board.board[row1][col1] is None or board.board[row1][col1].color != self.color:  # если клетка пустая или на ней фигура другого цвета
-                                    if not self.check_kings_around(row1, col1, board):  # если вокруг клетки нет королей другого цвета
-                                        flag = True
+                                    # if not board.check_kings_around(row1, col1, self.color):  # если вокруг клетки нет королей другого цвета
+                                    flag = True
                     except IndexError:
                         pass
             if flag:
