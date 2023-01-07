@@ -1,4 +1,5 @@
 import sqlite3
+from random import randint
 
 
 def write_result_of_the_game(white_player_name, black_player_name, result, player_dict):  # запись результата игры в 
@@ -50,6 +51,5 @@ def read_results_of_the_game():  # чтение результата игры и
 
 if __name__ == '__main__':
     for i in range(200):
-        write_result_of_the_game('ыфыфыфыфыфыфыфыфыф', 'ыфыфыфыфыфыфыфыфыф', 1,
-                                 {1: 'ыфыфыфыфыфыфыфыфыф', 0: 'ыфыфыфыфыфыфыфыфыф'})
+        write_result_of_the_game('Даниил', 'Илон', randint(-1, 1), {1: 'Даниил', 0: 'Илон'})
     print(read_results_of_the_game())
