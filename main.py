@@ -8,6 +8,7 @@ from button import Button
 from Board import Board
 from config import OPPONENT_COLOR
 from inputbox import InputBox
+from database import write_result_of_the_game, read_results_of_the_game
 
 
 class Game:
@@ -40,6 +41,8 @@ class Game:
         self.draw = False
         self.mate = False
         self.input_boxes = []
+        self.result_of_the_game = None
+        self.global_results_of_the_game = {}
         self.main(color)
 
     def reset_coords(self):
@@ -62,9 +65,11 @@ class Game:
             if not self.draw and not self.mate and not self.board.check_mat(self.player_color) and not \
                     self.board.check_pat(self.player_color):
                 self.mode5(another_func)
+            elif self.draw or self.mate or self.board.check_mat(self.player_color) or \
+                    self.board.check_pat(self.player_color):
+                self.main(1)
             else:
                 self.game_mode = self.before_mode
-
 
     def mode1(self):
         # создаем список с полями ввода для удобства обработки
@@ -91,11 +96,23 @@ class Game:
 
     def mode5(self, another_func):
         self.elements = [
-            Button(self.main_surface, 100, 550, 200, 100, "Да", self.change_game_mode, 0, False),
-            Button(self.main_surface, 500, 550, 200, 100, "Нет", self.change_game_mode, self.before_mode, False)
+            Button(self.main_surface, 110, 550, 200, 100, "Да", self.exit_and_lose, 2, False),
+            Button(self.main_surface, 490, 550, 200, 100, "Нет", self.change_game_mode, self.before_mode, False)
         ]
         if another_func:
-            self.elements[0] = Button(self.main_surface, 100, 550, 200, 100, "Да", exit, None, False)
+            self.elements[0] = Button(self.main_surface, 110, 550, 200, 100, "Да", self.exit_and_lose, 1, False)
+
+    def exit_and_lose(self, what_to_do=1):  # 1 - выход, 2 - главное меню
+        if self.player_color == 1:
+            self.result_of_the_game = -1
+        else:
+            self.result_of_the_game = 1
+        write_result_of_the_game(self.white_player_name, self.black_player_name,
+                                 self.result_of_the_game, self.player_dict)
+        if what_to_do == 1:
+            exit()
+        else:
+            self.change_game_mode(0)
 
     def change_player_color(self, color):  # функция смены цвета игрока которая вызывается кнопкой
         self.player_color = color
@@ -107,6 +124,9 @@ class Game:
             self.msg = 'Ничья! Достигнута ничья!'
             self.sound_of_end_or_start_of_the_game.play()
             self.game_mode = 6
+            self.result_of_the_game = 0
+            write_result_of_the_game(self.white_player_name, self.black_player_name,
+                                     self.result_of_the_game, self.player_dict)
 
     def declare_a_mate(self):
         if not self.mate and not self.draw and not self.board.check_mat(self.player_color) and not \
@@ -116,6 +136,12 @@ class Game:
                        self.player_dict[OPPONENT_COLOR[self.player_color]] + ' победил!'
             self.sound_of_end_or_start_of_the_game.play()
             self.game_mode = 6
+            if self.player_color == 1:
+                self.result_of_the_game = -1
+            else:
+                self.result_of_the_game = 1
+            write_result_of_the_game(self.white_player_name, self.black_player_name,
+                                     self.result_of_the_game, self.player_dict)
 
     def back(self):
         if not self.mate and not self.draw and not self.board.check_mat(self.player_color) and not \
@@ -135,6 +161,7 @@ class Game:
                 self.avl_moves = []
 
     def main(self, player_side):
+        self.global_results_of_the_game = read_results_of_the_game()
         self.game_mode = 0
         # инициализируем pygame
         pygame.init()
@@ -154,7 +181,7 @@ class Game:
         # создаем цвет
         self.player_color = player_side
         # создаем доску
-        self.board = Board(self.player_color)
+        self.board = Board()
         # создаем шрифт
         self.font = pygame.font.SysFont('Arial', 20)
         # TODO: инициализация имен игроков будет доделана позже
@@ -165,13 +192,16 @@ class Game:
         self.reset_coords()
         self.draw = False
         self.mate = False
+        self.result_of_the_game = None
+        self.selected_figure = None
+        self.avl_moves = []
         # игровой цикл
         while True:
             # обрабатываем события
             for event in pygame.event.get():
                 # обрабатываем события
                 if event.type == pygame.QUIT:
-                    if self.game_mode == 2 or self.game_mode == 3:
+                    if self.game_mode == 2 or self.game_mode == 3 or self.game_mode == 5:
                         self.change_game_mode(5, True)
                     else:
                         exit()
@@ -218,7 +248,8 @@ class Game:
                                     if move.row == selected_row and move.col == selected_col:
                                         if move.type_of_move in [config.TAKE_MOVE, config.PASSED_TAKE_MOVE]:
                                             self.sound_of_take_move.play()
-                                        elif move.type_of_move == config.CONVERSION_MOVE and move.taken_figure is not None:
+                                        elif move.type_of_move == config.CONVERSION_MOVE and \
+                                                move.taken_figure is not None:
                                             self.sound_of_take_move.play()
                                         else:
                                             self.sound_of_normal_move.play()
@@ -238,6 +269,10 @@ class Game:
                                             pygame.time.wait(
                                                 250)  # добавляем задержку, чтобы звук совершения хода успел
                                             # проиграться
+                                            if self.player_color == 0:
+                                                self.result_of_the_game = 1
+                                            else:
+                                                self.result_of_the_game = -1
                                             self.sound_of_end_or_start_of_the_game.play()
                                         elif self.board.check_pat(self.player_color):
                                             self.msg = 'Пат! Достигнута ничья!'
@@ -246,22 +281,28 @@ class Game:
                                                 250)  # добавляем задержку, чтобы звук совершения хода успел
                                             # проиграться
                                             self.sound_of_end_or_start_of_the_game.play()
+                                            self.result_of_the_game = 0
                                         elif self.board.check_triple_repetition_of_a_position():
                                             self.msg = 'Ничья! Троекратное повторение позиции!'
                                             self.game_mode = 6
                                             pygame.time.wait(250)
                                             self.sound_of_end_or_start_of_the_game.play()
+                                            self.result_of_the_game = 0
                                         elif self.board.check_fifty_moves_rule():
                                             self.msg = 'Ничья! Правило пятидесяти ходов!'
                                             self.game_mode = 6
                                             pygame.time.wait(250)
                                             self.sound_of_end_or_start_of_the_game.play()
+                                            self.result_of_the_game = 0
+                                        if self.result_of_the_game is not None:
+                                            write_result_of_the_game(self.white_player_name, self.black_player_name,
+                                                                     self.result_of_the_game, self.player_dict)
                     if event.button == 3:
                         if self.game_mode == 6:
                             self.main(1)
-                    if event.button == 4:
+                    if event.button == 4 and self.game_mode in [2, 3, 6]:
                         config.recount_coefficent_and_length_of_divider(2)
-                    if event.button == 5:
+                    if event.button == 5 and self.game_mode in [2, 3, 6]:
                         config.recount_coefficent_and_length_of_divider(-2)
                     # TODO: ОСНОВНАЯ ЗАДАЧА - ПРОПИСАТЬ ВСЕ ОСТАЛЬНЫЕ РЕЖИМЫ РАБОТЫ ИГРЫ
                 if event.type == pygame.MOUSEMOTION:
@@ -291,7 +332,12 @@ class Game:
     def redraw_question_screen(self):
         # отрисовываем фон
         self.main_surface.blit(self.background.image, self.background.rect)  # отрисовываем фон
-        pygame.draw.rect(self.main_surface, (35, 25, 105), (100, 100, 600, 200))
+        # отрисовываю прямоугольник (подложку) для текста (для того, чтобы прямоугольник был полупрозрачным я
+        # использую surface)
+        surface = pygame.Surface((600, 600))
+        surface.fill((35, 25, 95))
+        surface.set_alpha(200)
+        self.main_surface.blit(surface, (100, 100))
         font = pygame.font.Font(None, 51)
         text = font.render('Вы уверены, что хотите выйти?', True, (255, 0, 0))
         font = pygame.font.Font(None, 25)
@@ -304,13 +350,49 @@ class Game:
     # функция отрисовки начального экрана
     def redraw_main_screen(self):
         self.main_surface.blit(self.background.image, self.background.rect)  # отрисовываем фон
+        # Код ниже отвечает за отрисовку информации из базы данных (она получена заранее в методе main и записана в
+        # переменную global_results_of_the_game) в левой части экрана отрисовываеться информация о последних 3ех
+        # играх в формате player_name1 vs player_name2. В правой - результат игры (Победил(а) player_name1 или
+        # Ничья)
+        if self.global_results_of_the_game:
+            # отриовываем прямоугольник под информацию о последних играх (для того, чтобы он был полупрозрачный я
+            # использую surface)
+            surface = pygame.Surface((760, 250))
+            surface.fill((35, 25, 95))
+            surface.set_alpha(200)
+            self.main_surface.blit(surface, (20, 20))
+            # заголовок к информации о проследних играх
+            font = pygame.font.Font(None, 25)
+            text = font.render('Последние игры:', True, (255, 0, 0))
+            self.main_surface.blit(text, (30, 30))
+            # заголовок к результатам игр
+            font = pygame.font.Font(None, 25)
+            text = font.render('Результаты поледних игр:', True, (255, 0, 0))
+            self.main_surface.blit(text, (470, 30))
+            # отрисовываем информацию о последних играх
+            font = pygame.font.Font(None, 18)
+            counter_of_printed_games_info = 1
+            for i in range(len(self.global_results_of_the_game), 0, -1):
+                player_name_text = font.render(self.global_results_of_the_game[i][0] + ' vs ' +
+                                               self.global_results_of_the_game[i][1], True, (255, 255, 255))
+                result_of_the_game_text = font.render(self.global_results_of_the_game[i][2], True, (255, 255, 255))
+                self.main_surface.blit(player_name_text, (35, 30 + counter_of_printed_games_info * 22))
+                self.main_surface.blit(result_of_the_game_text, (485, 30 + counter_of_printed_games_info * 22))
+                if counter_of_printed_games_info >= 10:
+                    break
+                counter_of_printed_games_info += 1
+
         for element in self.elements:
             element.process()  # обрабатываем элементы
         pygame.display.flip()  # обновляем окно
 
     def draw_players_name_screen(self):
-        # рисуем цветной прямоугольник под текст и поля ввода
-        pygame.draw.rect(self.main_surface, (35, 25, 95), (100, 100, 600, 400))
+        # рисуем цветной прямоугольник под текст и поля ввода (для того, чтобы он был полупрозрачный я использую
+        # surface)
+        surface = pygame.Surface((600, 400))
+        surface.fill((35, 25, 95))
+        surface.set_alpha(200)
+        self.main_surface.blit(surface, (100, 100))
         # рисуем текст
         font = pygame.font.Font(None, 50)
         text = font.render('Введите имена игроков', True, (255, 255, 255))
@@ -334,7 +416,12 @@ class Game:
     def redraw_game_screen(self):
         self.main_surface.blit(self.background.image, self.background.rect)  # отрисовываем фон
         for element in self.elements:
-            element.process()  # обрабатываем элементы
+            if element.buttonText in ['Сдаться', 'Объявить ничью', 'Отменить ход']:
+                if config.size_of_cell < 57:
+                    element.process()  # обрабатываем элементы
+            if element.buttonText in ['<- Назад']:
+                if config.size_of_cell < 71:
+                    element.process()
         self.draw_cell()
         self.draw_figures()
         self.draw_msg()
@@ -358,8 +445,9 @@ class Game:
             self.game_surface.get_width() - config.length_of_divider_between_cells * 2,
             self.game_surface.get_height() - config.length_of_divider_between_cells * 2
         ), config.coefficient)
-        # отрисовываем вторую границу, которая теперь состоит из четырех прямоугольников, два - сверху вниз, два - млева направо, вне поля с запасов в coefficient пикселей и шириной в length_of_divider_between_cells пикселей
-        # это спарва налево
+        # отрисовываем вторую границу, которая теперь состоит из четырех прямоугольников, два - сверху вниз,
+        # два - млева направо, вне поля с запасов в coefficient пикселей и шириной в length_of_divider_between_cells
+        # пикселей это спарва налево
         pygame.draw.rect(self.game_surface, (0, 0, 0), (
             config.length_of_divider_between_cells,
             config.coefficient + config.length_of_divider_between_cells,
@@ -391,7 +479,8 @@ class Game:
             if amount_of_row != 0:
                 # сверху в низ
                 pygame.draw.rect(self.game_surface, (0, 0, 0), (
-                    config.length_of_divider_between_cells + config.coefficient + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells,
+                    config.length_of_divider_between_cells + config.coefficient + amount_of_row * config.size_of_cell
+                    + amount_of_row * config.length_of_divider_between_cells,
                     config.length_of_divider_between_cells,
                     config.length_of_divider_between_cells,
                     self.game_surface.get_height() - config.length_of_divider_between_cells * 2
@@ -399,7 +488,8 @@ class Game:
                 # справа налево
                 pygame.draw.rect(self.game_surface, (0, 0, 0), (
                     config.length_of_divider_between_cells,
-                    config.length_of_divider_between_cells + config.coefficient + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells,
+                    config.length_of_divider_between_cells + config.coefficient + amount_of_row * config.size_of_cell +
+                    amount_of_row * config.length_of_divider_between_cells,
                     self.game_surface.get_width() - config.length_of_divider_between_cells * 2,
                     config.length_of_divider_between_cells
                 ))
@@ -412,16 +502,19 @@ class Game:
                     color = (238, 232, 170)
                 else:
                     color = (160, 82, 45)
-                if self.selected_figure is not None and help_row == self.selected_figure.row and help_col == self.selected_figure.col:
+                if self.selected_figure is not None and help_row == self.selected_figure.row and help_col == \
+                        self.selected_figure.col:
                     color = (135, 148, 212)
                 if self.board.check_check(self.player_color) and self.board.get_king(
                         self.player_color).row == help_row and self.board.get_king(
-                        self.player_color).col == help_col:
+                    self.player_color).col == help_col:
                     color = (255, 0, 0)
                 # отрисовываем непосредственно клетки
                 pygame.draw.rect(self.game_surface, color, (
-                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells,
-                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells,
+                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells
+                    + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells,
+                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells
+                    + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells,
                     config.size_of_cell,
                     config.size_of_cell
                 ))
@@ -429,8 +522,12 @@ class Game:
                         (help_row == self.coords_before_move[0] and help_col == self.coords_before_move[1]) or (
                         help_row == self.coords_after_move[0] and help_col == self.coords_after_move[1])):
                     pygame.draw.rect(self.game_surface, (95, 41, 153), (
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells,
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells,
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col *
+                        config.length_of_divider_between_cells,
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row *
+                        config.length_of_divider_between_cells,
                         config.size_of_cell,
                         config.size_of_cell
                     ), 5)
@@ -448,58 +545,81 @@ class Game:
                                 0] and amount_of_col == self.mouse_move_selected_cell[1]:
                                 indent = 0
                                 pygame.draw.rect(self.game_surface, color_of_selection, (
-                                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells + indent,
-                                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells + indent,
+                                    config.length_of_divider_between_cells + config.coefficient +
+                                    config.length_of_divider_between_cells + amount_of_col * config.size_of_cell +
+                                    amount_of_col * config.length_of_divider_between_cells + indent,
+                                    config.length_of_divider_between_cells + config.coefficient +
+                                    config.length_of_divider_between_cells + amount_of_row * config.size_of_cell +
+                                    amount_of_row * config.length_of_divider_between_cells + indent,
                                     config.size_of_cell - indent * 2,
                                     config.size_of_cell - indent * 2
                                 ))
                             else:
                                 pygame.draw.ellipse(self.game_surface, color_of_selection, (
-                                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells + indent,
-                                    config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells + indent,
+                                    config.length_of_divider_between_cells + config.coefficient +
+                                    config.length_of_divider_between_cells + amount_of_col * config.size_of_cell +
+                                    amount_of_col * config.length_of_divider_between_cells + indent,
+                                    config.length_of_divider_between_cells + config.coefficient +
+                                    config.length_of_divider_between_cells + amount_of_row * config.size_of_cell +
+                                    amount_of_row * config.length_of_divider_between_cells + indent,
                                     config.size_of_cell - indent * 2,
                                     config.size_of_cell - indent * 2
                                 ))
                 # отрисовываем буквы так, чтобы они появились в области с шириной coefficient пикселей
                 if amount_of_row == 0:
                     text = self.font.render(
-                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65), True,
+                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65),
+                        True,
                         (0, 0, 0))
                     self.game_surface.blit(text, (
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_width() // 2,
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col *
+                        config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_width() // 2,
                         config.length_of_divider_between_cells + config.coefficient // 2 - text.get_height() // 2
                     ))
                 if amount_of_row == 7:
                     text = self.font.render(
-                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65), True,
+                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65),
+                        True,
                         (0, 0, 0))
                     self.game_surface.blit(text, (
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_width() // 2,
-                        self.game_surface.get_height() - config.length_of_divider_between_cells - config.coefficient // 2 - text.get_height() // 2
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col *
+                        config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_width() // 2,
+                        self.game_surface.get_height() - config.length_of_divider_between_cells - config.coefficient //
+                        2 - text.get_height() // 2
                     ))
                 # отрисовываем цифры так, чтобы они появились в области с высотой coefficient пикселей
                 if amount_of_col == 0:
-                    text = self.font.render(str(8 - amount_of_row) if self.player_color == 1 else str(amount_of_row + 1), True,
-                                       (0, 0, 0))
+                    text = self.font.render(
+                        str(8 - amount_of_row) if self.player_color == 1 else str(amount_of_row + 1), True,
+                        (0, 0, 0))
                     self.game_surface.blit(text, (
                         config.length_of_divider_between_cells + config.coefficient // 2 - text.get_width() // 2,
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_height() // 2
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row *
+                        config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_height() // 2
                     ))
                 if amount_of_col == 7:
-                    text = self.font.render(str(8 - amount_of_row) if self.player_color == 1 else str(amount_of_row + 1), True,
-                                       (0, 0, 0))
+                    text = self.font.render(
+                        str(8 - amount_of_row) if self.player_color == 1 else str(amount_of_row + 1), True,
+                        (0, 0, 0))
                     self.game_surface.blit(text, (
-                        self.game_surface.get_width() - config.length_of_divider_between_cells - config.coefficient // 2 - text.get_width() // 2,
-                        config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_height() // 2
+                        self.game_surface.get_width() - config.length_of_divider_between_cells - config.coefficient //
+                        2 - text.get_width() // 2,
+                        config.length_of_divider_between_cells + config.coefficient +
+                        config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row *
+                        config.length_of_divider_between_cells + config.size_of_cell // 2 - text.get_height() // 2
                     ))
         self.main_surface.blit(self.game_surface, (
-            # отрисовываем холст на экране в первый раз c координатами, вычисленными по принципцу (длина\ширина холста - длина\ширина экрана) / 2
-            (self.width - (
-                    config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2,
+            # отрисовываем холст на экране в первый раз c координатами, вычисленными по принципцу (длина\ширина
+            # холста - длина\ширина экрана) / 2
+            (self.width - (config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 +
+                           config.coefficient * 2)) / 2,
             (self.height - (
-                    config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2,
+                    config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 +
+                    config.coefficient * 2)) / 2
         ))
-        # board.print_board()
 
     # функция, которая отрисовывает фигуры на доске
 
@@ -517,19 +637,23 @@ class Game:
                     # отрисовываем фигуру
                     try:
                         self.game_surface.blit(board_to_work_with[amount_of_row][amount_of_col].image, (
-                            config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col * config.length_of_divider_between_cells + config.size_of_cell // 2 -
+                            config.length_of_divider_between_cells + config.coefficient +
+                            config.length_of_divider_between_cells + amount_of_col * config.size_of_cell + amount_of_col
+                            * config.length_of_divider_between_cells + config.size_of_cell // 2 -
                             board_to_work_with[amount_of_row][amount_of_col].image.get_width() // 2,
-                            config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row * config.length_of_divider_between_cells + config.size_of_cell // 2 -
+                            config.length_of_divider_between_cells + config.coefficient +
+                            config.length_of_divider_between_cells + amount_of_row * config.size_of_cell + amount_of_row
+                            * config.length_of_divider_between_cells + config.size_of_cell // 2 -
                             board_to_work_with[amount_of_row][amount_of_col].image.get_height() // 2
                         ))
                     except Exception:
                         pass
         self.main_surface.blit(self.game_surface, (  # отрисовываем холст на экране в первый раз c координатами,
             # вычисленными по принципцу (длина\ширина холста - длина\ширина экрана) / 2
-            (self.width - (
-                    config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2,
-            (self.height - (
-                    config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2,
+            (self.width - (config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient *
+                           2)) / 2,
+            (self.height - (config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient
+                            * 2)) / 2,
         ))
 
     def get_selected_figure(self, mouse_event):
@@ -563,14 +687,15 @@ class Game:
     # это функция для поиска координат нажатия мыши относительно поля и массива board.board
     def get_mouse_selected_cell(self, mouse_event):
         event_x = mouse_event.pos[0] - (
-                self.width - (
-                config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2
+                self.width - (config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient
+                              * 2)) / 2
         event_y = mouse_event.pos[1] - (
-                self.height - (
-                config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 + config.coefficient * 2)) / 2
+                self.height - (config.size_of_cell * 8 + config.length_of_divider_between_cells * 11 +
+                               config.coefficient * 2)) / 2
         x = config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells  # ряды
         for amount_of_row in range(8):
-            y = config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells  # столбцы
+            # столбцы
+            y = config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells
             for amount_of_col in range(8):
                 try:
                     if pygame.Rect(y, x, config.size_of_cell, config.size_of_cell).collidepoint((event_x, event_y)):
@@ -598,7 +723,7 @@ class Game:
     def redraw_players_name_screen(self, event):
         self.main_surface.blit(self.background.image, self.background.rect)
         for element in self.elements:
-            element.process()  # обрабатываем элементы)
+            element.process()  # обрабатываем элементы
         self.draw_players_name_screen()
         for input_box in self.input_boxes:
             input_box.handle_event(event)

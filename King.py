@@ -1,14 +1,14 @@
 from Figure import Figure
-from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE, OPPONENT_COLOR
+from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE
 from Rook import Rook
-from TempFigure import TempFigure
 
 
 class King(Figure):  # наследуемся от класса Sprite для того, чтобы хранить объекты в самом себе.
     def __init__(self, x, y, color):
         Figure.__init__(self, x, y, color, 'King')  # вызываем конструктор родительского класса
 
-    def char(self):
+    @staticmethod
+    def char():
         return 'K'
 
     def can_move(self, row1, col1, board):  # функция для проверки, может ли король ходить в клетку row1, col1
@@ -31,26 +31,29 @@ class King(Figure):  # наследуемся от класса Sprite для т
                             self.col + 3].was_move():
                             if board.board[self.row][self.col + 1] is None and board.board[self.row][
                                 self.col + 2] is None:
-                                if not board.under_attack(self.row, self.col + 1, self.color) and not board.under_attack(
-                                        self.row, self.col + 2, self.color):
+                                if not board.under_attack(self.row, self.col + 1, self.color) and not \
+                                        board.under_attack(self.row, self.col + 2, self.color):
                                     return [True, CASTLING_MOVE]
                     elif col1 == self.col - 2:
                         if type(board.board[self.row][self.col - 4]) == Rook and not board.board[self.row][
                             self.col - 4].was_move():
                             if board.board[self.row][self.col - 1] is None and board.board[self.row][
                                 self.col - 2] is None and board.board[self.row][self.col - 3] is None:
-                                if not board.under_attack(self.row, self.col - 1, self.color) and not board.under_attack(
-                                        self.row, self.col - 2, self.color) and not board.under_attack(self.row, self.col - 3, self.color):
+                                if not board.under_attack(self.row, self.col - 1, self.color) and not \
+                                        board.under_attack(self.row, self.col - 2, self.color) and not \
+                                        board.under_attack(self.row, self.col - 3, self.color):
                                     return [True, CASTLING_MOVE]
             # проверка 2)) и 3))
             flag = False
             for i in [1, 0, -1]:  # коэффиценты для прибавления к row
                 for j in [1, 0, -1]:  # коэффиценты для прибавления к col
                     try:
-                        if row1 + i == self.row and col1 + j == self.col:  # если клетка рядом с королем (+- 1 клетка по всем осям)
-                            if not board.under_attack(row1, col1, self.color):  # если клетка не атакуется (при ходе на нее не будет шаха)
-                                if board.board[row1][col1] is None or board.board[row1][col1].color != self.color:  # если клетка пустая или на ней фигура другого цвета
-                                    # if not board.check_kings_around(row1, col1, self.color):  # если вокруг клетки нет королей другого цвета
+                        if row1 + i == self.row and col1 + j == self.col:  # если клетка рядом с королем (+- 1 клетка
+                            # по всем осям)
+                            if not board.under_attack(row1, col1, self.color):  # если клетка не атакуется (при ходе
+                                # на нее не будет шаха)
+                                # если клетка пустая или на ней фигура другого цвета
+                                if board.board[row1][col1] is None or board.board[row1][col1].color != self.color:
                                     flag = True
                     except IndexError:
                         pass

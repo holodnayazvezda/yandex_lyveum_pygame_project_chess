@@ -1,5 +1,5 @@
 from Figure import Figure
-from config import NORMAL_MOVE, TAKE_MOVE, CONVERSION_MOVE, WHITE, BLACK, CASTLING_MOVE, PASSED_TAKE_MOVE
+from config import NORMAL_MOVE, TAKE_MOVE, CONVERSION_MOVE, WHITE, PASSED_TAKE_MOVE
 import King
 
 
@@ -7,7 +7,8 @@ class Pawn(Figure):   # наследуемся от класса Sprite для �
     def __init__(self, row, col, color):
         Figure.__init__(self, row, col, color, "Pawn")  # вызываем конструктор родительского класса
 
-    def char(self):
+    @staticmethod
+    def char():
         return 'P'
 
     def can_move(self, row, col, board):  # board - это объект класса Board, а board.board - это двумерный массив клеток
@@ -46,13 +47,10 @@ class Pawn(Figure):   # наследуемся от класса Sprite для �
         if row == self.row + direction and (col == self.col + 1 or col == self.col - 1) and \
                 board.board[row][col] is None and board.board[self.row][col] is not None and \
                 board.board[self.row][col].color != self.color and \
-                board.board[self.row][col].name == "Pawn" and board.board[self.row][col] == board.all_moves[-1].figure and \
-                abs(board.all_moves[-1].row - board.all_moves[-1].basic_row) == 2:  # проверка на то,
-            # что ход на 1 клетку вперед и в бок. Также проверка на то, что на клетке есть фигура и она
+                board.board[self.row][col].name == "Pawn" and board.board[self.row][col] == \
+                board.all_moves[-1].figure and abs(board.all_moves[-1].row - board.all_moves[-1].basic_row) == 2:
+            # Проверка на то, что ход на 1 клетку вперед и в бок. Также проверка на то, что на клетке есть фигура и она
             # противоположного цвета и это пешка, которая сделала ход на 2 клетки вперед и это последний ход
             to_return[0] = True
             to_return.append(PASSED_TAKE_MOVE)
         return to_return
-
-
-

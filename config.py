@@ -10,9 +10,8 @@ def recount_coefficent_and_length_of_divider(cell_sice_coef):
     size_of_cell = size_of_cell + cell_sice_coef
     if size_of_cell < 40:
         size_of_cell = 40
-    if size_of_cell > 71:
-        size_of_cell = 71
-
+    if size_of_cell > 83:
+        size_of_cell = 83
     coefficient = round(size_of_cell * 0.3)
     length_of_divider_between_cells = round(size_of_cell * 0.1)
 
@@ -25,7 +24,7 @@ PASSED_TAKE_MOVE = 'passed_take'
 CASTLING_MOVE = 'castling'
 OPPONENT_COLOR = {WHITE: BLACK, BLACK: WHITE}
 ENGLISH_ALPHABED = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-RUSSIAN_ALPHABED = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя"
+RUSSIAN_ALPHABED = "АаБбВвГгДдЕеЁёЖжЗзИиЙйКкЛлМмНнОоПпРрСсТтУуФфХхЦцЧчШшЩщЪъЫыЬьЭэЮюЯя"
 NUMBERS = '0123456789'
 
 

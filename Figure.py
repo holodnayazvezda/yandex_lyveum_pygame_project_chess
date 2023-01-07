@@ -4,14 +4,17 @@ from Move import Move
 
 
 class Figure(pygame.sprite.Sprite):
-    def __init__(self, row, col, color, name, dir='sprites/', ext='.png'):
+    def __init__(self, row, col, color, name, directory='sprites/', ext='.png'):
         pygame.sprite.Sprite.__init__(self)
         self.row, self.col = row, col
         self.color = color
         self.name = name
         self.amount_of_moves = 0
+        self.x = None
+        self.y = None
         try:
-            self.image = pygame.image.load(dir + ('white' if color == WHITE else 'black') + name + ext)   # name с большой буквы
+            self.image = pygame.image.load(directory + ('white' if color == WHITE else 'black') + name + ext)   # name с 
+            # большой буквы 
         except Exception:
             self.image = None
 
@@ -34,7 +37,8 @@ class Figure(pygame.sprite.Sprite):
                     if result[1] == NORMAL_MOVE:
                         moves.append(self.create_normal_move(amount_of_row, amount_of_col))
                     elif result[1] == TAKE_MOVE:
-                        moves.append(self.create_take_move(amount_of_row, amount_of_col, board.board[amount_of_row][amount_of_col]))
+                        moves.append(self.create_take_move(amount_of_row, amount_of_col, 
+                                                           board.board[amount_of_row][amount_of_col]))
                     elif result[1] == CONVERSION_MOVE:
                         moves.append(self.create_conversion_move(amount_of_row, amount_of_col, board))
                     elif result[1] == PASSED_TAKE_MOVE:
@@ -43,10 +47,12 @@ class Figure(pygame.sprite.Sprite):
                                 amount_of_row + (-1 if self.color == WHITE else 1)][amount_of_col])
                         )
                     if result[1] == CASTLING_MOVE:
-                        if board.under_attack(board.get_king(self.color).row, board.get_king(self.color).col, self.color):  # проверка на шах при рокировке
+                        if board.under_attack(board.get_king(self.color).row, 
+                                              board.get_king(self.color).col, self.color):  # проверка на шах при 
+                            # рокировке 
                             continue
                         moves.append(self.create_castling_move(amount_of_row, amount_of_col, board))
-                    # проверка на шах после хода (если он есть, или еслм он появляется после хода)
+                    # проверка на шах после хода (если он есть, или если он появляется после хода)
                     now_move = moves[-1]  # выбираем последний ход
                     now_move.apply_move(board)  # применяем ход
                     if board.check_check(self.color):  # если после применения хода есть шах, то

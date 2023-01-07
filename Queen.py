@@ -7,17 +7,19 @@ class Queen(Figure):  # наследуемся от класса Sprite для �
     def __init__(self, x, y, color):
         Figure.__init__(self, x, y, color, 'Queen')  # вызываем конструктор родительского класса
 
-    def char(self):
+    @staticmethod
+    def char():
         return 'Q'
 
-    def can_move(self, row1, col1, board):  # board - это объект класса board, а board.board - это двумерный массив клеток
+    def can_move(self, row1, col1, board):  # board - это объект класса board, а board.board - это двумерный массив
+        # клеток
         if not (0 <= row1 < 8 and 0 <= col1 < 8):
             return [False]
         if self.row == row1 and self.col == col1:
             return [False]
         to_return = [False]
-        if (board.board[row1][col1] is None or board.board[row1][col1].color != self.color) and not isinstance(board.board[row1][col1],
-                                                                                                   King.King):
+        if (board.board[row1][col1] is None or board.board[row1][col1].color != self.color) and not \
+                isinstance(board.board[row1][col1], King.King):
             can = []
             for x in range(self.row + 1, 8):
                 d = board.board[x][self.col]

@@ -4,12 +4,12 @@ from Knight import Knight
 from Bishop import Bishop
 from Queen import Queen
 from King import King
-from config import WHITE, BLACK, OPPONENT_COLOR, TAKE_MOVE, NORMAL_MOVE, CONVERSION_MOVE, PASSED_TAKE_MOVE, CASTLING_MOVE
+from config import WHITE, BLACK, OPPONENT_COLOR, TAKE_MOVE
 from TempFigure import TempFigure
 
 
 class Board:
-    def __init__(self, player_side):
+    def __init__(self):
         self.board = []
         self.all_figures = {1: [], 0: []}  # словарь всех фигур 1 - белые фигуры, 0 - черные фигуры
         self.all_moves = []  # список всех ходов, в нем лежат объекты класса Move
@@ -107,19 +107,18 @@ class Board:
         count = 0
         for position in self.positions[:-1]:
             match_counter = 0
-            for iter in zip(last_position, position):  # сравниваем две позиции 0 - текущая, 1 - предыдущая
-                # print(iter)
-                if iter[0] is None and iter[1] is None:
+            for pos in zip(last_position, position):  # сравниваем две позиции 0 - текущая, 1 - предыдущая
+                # print(pos)
+                if pos[0] is None and pos[1] is None:
                     match_counter += 1
-                elif iter[0] is not None and iter[1] is not None:
-                    if iter[0].color == iter[1].color and iter[0].name == iter[1].name:
+                elif pos[0] is not None and pos[1] is not None:
+                    if pos[0].color == pos[1].color and pos[0].name == pos[1].name:
                         match_counter += 1
             if match_counter == 64:
                 count += 1
         if count == 2:
             return True
         return False
-
 
     @staticmethod
     def create_queen_for_pawn(row, col, color):
@@ -166,8 +165,8 @@ class Board:
 
 
 if __name__ == '__main__':
-    board = Board(0)  # создаем доску белые фигуры
-    board1 = Board(0)  # создаем доску черные фигуры
+    board = Board()  # создаем доску белые фигуры
+    board1 = Board()  # создаем доску черные фигуры
     x = board.board
     y = board1.board
     print(x == y)
@@ -178,4 +177,3 @@ if __name__ == '__main__':
     # print(board.under_attack(7, 7, BLACK))
     # print(board.check_check(BLACK))
     # print(board.check_check(WHITE))
-    # print(len(board.check_mat(WHITE)))

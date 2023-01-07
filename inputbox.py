@@ -2,12 +2,14 @@ import pygame
 from config import ENGLISH_ALPHABED, RUSSIAN_ALPHABED, NUMBERS
 pygame.init()
 
+
 class InputBox:
 
-    def __init__(self, x, y, w, h,  color_inactve=pygame.Color('lightskyblue3'), COLOR_ACTIVE=pygame.Color('dodgerblue2'), font=pygame.font.Font(None, 27)):
+    def __init__(self, x, y, w, h,  color_inactve=pygame.Color('lightskyblue3'),
+                 color_active=pygame.Color('dodgerblue2'), font=pygame.font.Font(None, 27)):
         # инициализируем переданные переменные
         self.COLOR_INACTIVE = color_inactve
-        self.COLOR_ACTIVE = COLOR_ACTIVE
+        self.COLOR_ACTIVE = color_active
         self.FONT = font
         # создаем необходимые параметры
         self.rect = pygame.Rect(x, y, w, h)
