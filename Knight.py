@@ -1,3 +1,5 @@
+# файл в котором реализуется логика шахматной фигуры "Конь"
+
 import King
 from Figure import Figure
 from config import NORMAL_MOVE, TAKE_MOVE

@@ -1,3 +1,6 @@
+# основной файл программы в котором осуществляется взаимодействие с пользователем и отрисовка игрового поля
+
+
 # импорт pygame
 import pygame
 
@@ -9,6 +12,7 @@ from Board import Board
 from config import OPPONENT_COLOR
 from inputbox import InputBox
 from database import write_result_of_the_game, read_results_of_the_game
+from checkbox import CheckBox
 
 
 class Game:
@@ -16,6 +20,7 @@ class Game:
         # инициализируем необходимые переменные
         self.background = Background('images/fon.jpg', [0, 0])  # создаем фон
         self.player_color = None  # цвет игрока
+        self.board_color = None  # цвет доски
         self.board = None  # создаем переменную доски
         self.elements = []  # создаем список элементов
         self.font = None  # создаем шрифт
@@ -43,6 +48,9 @@ class Game:
         self.input_boxes = []
         self.result_of_the_game = None
         self.global_results_of_the_game = {}
+        self.turn_board_checkbox = None  # чекбокс для перевората доски отображающийся в окне для ввожа имен
+        # игроков
+        self.turn_board = True
         self.main(color)
 
     def reset_coords(self):
@@ -50,7 +58,8 @@ class Game:
         self.coords_after_move = None
 
     def change_game_mode(self, mode, another_func=False):  # функция смены режима игры
-        self.before_mode = self.game_mode
+        if mode != self.game_mode:
+            self.before_mode = self.game_mode
         self.game_mode = mode
         if self.game_mode == 2 or self.game_mode == 3:
             if not self.msg:
@@ -74,13 +83,18 @@ class Game:
     def mode1(self):
         # создаем список с полями ввода для удобства обработки
         self.input_boxes = [InputBox(380, 244, 140, 32), InputBox(380, 344, 140, 32)]
+        # создаем чекбокс для переключения доски
+        self.turn_board_checkbox = CheckBox(self.main_surface, 100, 560, 'Переворачивать доску после каждого хода',
+                                            True)
+        # создаем чекбокс со значением по умолчанию - True
         # создаем кнопку для начала игры и помещаем ее в список элементов для обработки
         self.elements = [
-            Button(self.main_surface, 100, 550, 200, 100, "<- Назад", self.change_game_mode, 0, False),
-            Button(self.main_surface, 500, 550, 200, 100, "Далее ->", self.change_game_mode, 2, False)
+            Button(self.main_surface, 100, 625, 200, 100, "<- Назад", self.change_game_mode, 0, False),
+            Button(self.main_surface, 500, 625, 200, 100, "Далее ->", self.change_game_mode, 2, False)
         ]
 
     def mode2(self):
+        self.change_player_color(self.player_color)
         # создаем кнопки
         self.elements = [
             Button(self.main_surface, 90, 675, 200, 50, 'Сдаться', self.declare_a_mate, None, False, 'Arial', 25),
@@ -91,10 +105,15 @@ class Game:
             Button(self.main_surface, 90, 740, 640, 50, "<- Назад", self.change_game_mode, 5, False, 'Arial', 30)]
         self.white_player_name = self.input_boxes[0].text  # получаем имя белого игрока
         self.black_player_name = self.input_boxes[1].text  # получаем имя черного игрока
+        self.turn_board = self.turn_board_checkbox.checked  # получаем значение чекбокса
         self.player_dict = {1: self.white_player_name, 0: self.black_player_name}  # обновляем словарь с именами игроков
         self.sound_of_end_or_start_of_the_game.play()
 
     def mode5(self, another_func):
+        # создаем чекбокс для переключения доски
+        self.turn_board_checkbox = CheckBox(self.main_surface, 115, 500, 'Переворачивать доску после каждого хода',
+                                            self.turn_board_checkbox.checked, 24)
+        # создаем чекбокс со значением по умолчанию - True
         self.elements = [
             Button(self.main_surface, 110, 550, 200, 100, "Да", self.exit_and_lose, 2, False),
             Button(self.main_surface, 490, 550, 200, 100, "Нет", self.change_game_mode, self.before_mode, False)
@@ -116,6 +135,10 @@ class Game:
 
     def change_player_color(self, color):  # функция смены цвета игрока которая вызывается кнопкой
         self.player_color = color
+        if self.turn_board_checkbox.checked:  # если включен чекбокс переворачивания доски то меняем цвет доски
+            self.board_color = self.player_color
+        else:
+            self.board_color = 1
 
     def declare_a_draw(self):
         if not self.draw and not self.mate and not self.board.check_mat(self.player_color) and not \
@@ -149,7 +172,7 @@ class Game:
             if self.board.all_moves:
                 self.board.all_moves[-1].undo_move(self.board)  # отменим последний ход
                 # далее меняем необходимые переменные
-                self.player_color = OPPONENT_COLOR[self.player_color]
+                self.change_player_color(OPPONENT_COLOR[self.player_color])
                 if self.board.all_moves:
                     self.coords_before_move = (self.board.all_moves[-1].basic_row, self.board.all_moves[-1].basic_col)
                     self.coords_after_move = (self.board.all_moves[-1].row, self.board.all_moves[-1].col)
@@ -180,6 +203,7 @@ class Game:
         # игра (без зажатой кнопки просто отрисовывае поле, если кнопка нажата, то ищем фигуру, которую выбрал игрок)
         # создаем цвет
         self.player_color = player_side
+        self.board_color = player_side  # цвет доски
         # создаем доску
         self.board = Board()
         # создаем шрифт
@@ -233,8 +257,8 @@ class Game:
                                 selected_row, selected_col = result
                                 if self.board.board[selected_row][selected_col] is not None:
                                     if self.board.board[selected_row][selected_col].color == self.player_color:
-                                        if self.board.board[selected_row][
-                                            selected_col] == self.selected_figure:  # если выбрана та же
+                                        if self.board.board[selected_row][selected_col] == \
+                                                self.selected_figure:  # если выбрана та же
                                             # фигура (пользователь еще раз нажал по ней)
                                             self.game_mode = 2
                                             self.avl_moves = []
@@ -309,7 +333,7 @@ class Game:
                     if self.game_mode == 3:
                         self.mouse_move_selected_cell = self.get_mouse_selected_cell(event)
                         if self.mouse_move_selected_cell is not None:
-                            if self.player_color == config.WHITE:
+                            if self.board_color == config.WHITE:
                                 self.mouse_move_selected_cell[0] = 7 - self.mouse_move_selected_cell[0]
                             else:
                                 self.mouse_move_selected_cell[1] = 7 - self.mouse_move_selected_cell[1]
@@ -320,7 +344,7 @@ class Game:
                 if self.game_mode == 1:
                     self.redraw_players_name_screen(event)
                 if self.game_mode == 5:
-                    self.redraw_question_screen()
+                    self.redraw_question_screen(event)
             # обновляем фон
             self.background.update()
             if self.game_mode not in [0, 1, 5]:
@@ -329,7 +353,7 @@ class Game:
             pygame.display.flip()
 
     # функция отрисовки экрана с вопросом о продолжении игры
-    def redraw_question_screen(self):
+    def redraw_question_screen(self, event):
         # отрисовываем фон
         self.main_surface.blit(self.background.image, self.background.rect)  # отрисовываем фон
         # отрисовываю прямоугольник (подложку) для текста (для того, чтобы прямоугольник был полупрозрачным я
@@ -344,6 +368,9 @@ class Game:
         text1 = font.render('Ваш соперник будет объявлен победителем, если вы покинете игру!', True, (255, 255, 255))
         self.main_surface.blit(text, (130, 120))
         self.main_surface.blit(text1, (112, 170))
+        if self.turn_board_checkbox:
+            self.turn_board_checkbox.update(event)
+            self.turn_board_checkbox.render_checkbox()
         for element in self.elements:
             element.process()
 
@@ -494,7 +521,7 @@ class Game:
                     config.length_of_divider_between_cells
                 ))
             for amount_of_col in range(8):
-                if self.player_color == config.WHITE:
+                if self.board_color == config.WHITE:
                     help_row, help_col = 7 - amount_of_row, amount_of_col
                 else:
                     help_row, help_col = amount_of_row, 7 - amount_of_col
@@ -506,8 +533,7 @@ class Game:
                         self.selected_figure.col:
                     color = (135, 148, 212)
                 if self.board.check_check(self.player_color) and self.board.get_king(
-                        self.player_color).row == help_row and self.board.get_king(
-                    self.player_color).col == help_col:
+                        self.player_color).row == help_row and self.board.get_king(self.player_color).col == help_col:
                     color = (255, 0, 0)
                 # отрисовываем непосредственно клетки
                 pygame.draw.rect(self.game_surface, color, (
@@ -538,11 +564,11 @@ class Game:
                             color_of_selection = (82, 209, 25)
                             if self.board.board[help_row][help_col] is not None and self.board.board[help_row][
                                 help_col].color != self.player_color and \
-                                    self.board.under_attack(help_row, help_col, OPPONENT_COLOR[self.player_color]):
+                                    self.board.under_attack(help_row, help_col, OPPONENT_COLOR[self.player_color]):  # ?
                                 indent = round(config.size_of_cell * 0.13)
                                 color_of_selection = (255, 50, 50)
-                            if self.mouse_move_selected_cell and amount_of_row == self.mouse_move_selected_cell[
-                                0] and amount_of_col == self.mouse_move_selected_cell[1]:
+                            if self.mouse_move_selected_cell and amount_of_row == self.mouse_move_selected_cell[0] and \
+                                    amount_of_col == self.mouse_move_selected_cell[1]:
                                 indent = 0
                                 pygame.draw.rect(self.game_surface, color_of_selection, (
                                     config.length_of_divider_between_cells + config.coefficient +
@@ -568,7 +594,7 @@ class Game:
                 # отрисовываем буквы так, чтобы они появились в области с шириной coefficient пикселей
                 if amount_of_row == 0:
                     text = self.font.render(
-                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65),
+                        chr(amount_of_col + 65) if self.board_color == config.WHITE else chr(7 - amount_of_col + 65),
                         True,
                         (0, 0, 0))
                     self.game_surface.blit(text, (
@@ -579,7 +605,7 @@ class Game:
                     ))
                 if amount_of_row == 7:
                     text = self.font.render(
-                        chr(amount_of_col + 65) if self.player_color == config.WHITE else chr(7 - amount_of_col + 65),
+                        chr(amount_of_col + 65) if self.board_color == config.WHITE else chr(7 - amount_of_col + 65),
                         True,
                         (0, 0, 0))
                     self.game_surface.blit(text, (
@@ -602,7 +628,7 @@ class Game:
                     ))
                 if amount_of_col == 7:
                     text = self.font.render(
-                        str(8 - amount_of_row) if self.player_color == 1 else str(amount_of_row + 1), True,
+                        str(8 - amount_of_row) if self.board_color == 1 else str(amount_of_row + 1), True,
                         (0, 0, 0))
                     self.game_surface.blit(text, (
                         self.game_surface.get_width() - config.length_of_divider_between_cells - config.coefficient //
@@ -626,7 +652,7 @@ class Game:
     def draw_figures(self):
         board_to_work_with = self.board.board.copy()
         # переворасиваем в зависимости от цвета игрока
-        if self.player_color == config.BLACK:
+        if self.board_color == config.BLACK:
             board_to_work_with = list(map(lambda row: row[::-1], board_to_work_with))
         else:
             board_to_work_with = board_to_work_with[::-1]
@@ -665,7 +691,7 @@ class Game:
         # то вернуть None
         board_to_work_with = self.board.board.copy()
         # переворасиваем в зависимости от цвета игрока
-        if self.player_color == config.BLACK:
+        if self.board_color == config.BLACK:
             board_to_work_with = list(map(lambda row: row[::-1], board_to_work_with))
         else:
             board_to_work_with = board_to_work_with[::-1]
@@ -674,7 +700,7 @@ class Game:
             y = config.length_of_divider_between_cells + config.coefficient + config.length_of_divider_between_cells
             for amount_of_col in range(8):
                 if board_to_work_with[amount_of_row][amount_of_col] is not None:
-                    if board_to_work_with[amount_of_row][amount_of_col].color == self.player_color:
+                    if board_to_work_with[amount_of_row][amount_of_col].color == self.player_color:  # ?
                         try:
                             if pygame.Rect(y, x, config.size_of_cell, config.size_of_cell).collidepoint(
                                     (event_x, event_y)):
@@ -699,7 +725,7 @@ class Game:
             for amount_of_col in range(8):
                 try:
                     if pygame.Rect(y, x, config.size_of_cell, config.size_of_cell).collidepoint((event_x, event_y)):
-                        if self.player_color == config.BLACK:
+                        if self.board_color == config.BLACK:
                             return [amount_of_row, 7 - amount_of_col]
                         return [7 - amount_of_row, amount_of_col]
                 except Exception:
@@ -725,12 +751,18 @@ class Game:
         for element in self.elements:
             element.process()  # обрабатываем элементы
         self.draw_players_name_screen()
+        flag_empty_name = False
         for input_box in self.input_boxes:
             input_box.handle_event(event)
             if len(input_box.text.replace(' ', '')) == 0:
-                self.msg = 'Поле "имя игрока" не может быть пустым!'
-            else:
-                self.msg = None
+                flag_empty_name = True
+        if flag_empty_name:
+            self.msg = 'Поле "имя игрока" не может быть пустым!'
+        else:
+            self.msg = None
+        if self.turn_board_checkbox:
+            self.turn_board_checkbox.update(event)
+            self.turn_board_checkbox.render_checkbox()
         for input_box in self.input_boxes:
             input_box.update()
         for input_box in self.input_boxes:

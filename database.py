@@ -1,3 +1,5 @@
+# файл, в котором реализуется логика работы с базой данных
+
 import sqlite3
 from random import randint
 

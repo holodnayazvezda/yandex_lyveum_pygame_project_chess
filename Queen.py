@@ -1,3 +1,5 @@
+# файл в котором реализуется логика шахматной фигуры "Ферзь" (Королева)
+
 from Figure import Figure
 from config import TAKE_MOVE, NORMAL_MOVE
 import King

@@ -1,3 +1,5 @@
+# файл в котором реализуется логика класса Move
+
 from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE, CONVERSION_MOVE, PASSED_TAKE_MOVE
 
 

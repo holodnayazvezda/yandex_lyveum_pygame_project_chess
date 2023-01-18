@@ -1,3 +1,5 @@
+# файл в котором реализуется логика класса InputBox (поле ввода)
+
 import pygame
 from config import ENGLISH_ALPHABED, RUSSIAN_ALPHABED, NUMBERS
 pygame.init()

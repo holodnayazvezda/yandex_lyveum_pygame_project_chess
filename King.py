@@ -1,3 +1,5 @@
+# файл в котором реализуется логика шахматной фигуры "Король"
+
 from Figure import Figure
 from config import NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE
 from Rook import Rook
@@ -27,18 +29,18 @@ class King(Figure):  # наследуемся от класса Sprite для т
             if not self.was_move():
                 if row1 == self.row:
                     if col1 == self.col + 2:
-                        if type(board.board[self.row][self.col + 3]) == Rook and not board.board[self.row][
-                            self.col + 3].was_move():
-                            if board.board[self.row][self.col + 1] is None and board.board[self.row][
-                                self.col + 2] is None:
+                        if type(board.board[self.row][self.col + 3]) == Rook and not \
+                                board.board[self.row][self.col + 3].was_move():
+                            if board.board[self.row][self.col + 1] is None and \
+                                    board.board[self.row][self.col + 2] is None:
                                 if not board.under_attack(self.row, self.col + 1, self.color) and not \
                                         board.under_attack(self.row, self.col + 2, self.color):
                                     return [True, CASTLING_MOVE]
                     elif col1 == self.col - 2:
-                        if type(board.board[self.row][self.col - 4]) == Rook and not board.board[self.row][
-                            self.col - 4].was_move():
-                            if board.board[self.row][self.col - 1] is None and board.board[self.row][
-                                self.col - 2] is None and board.board[self.row][self.col - 3] is None:
+                        if type(board.board[self.row][self.col - 4]) == Rook and not \
+                                board.board[self.row][self.col - 4].was_move():
+                            if board.board[self.row][self.col - 1] is None and board.board[self.row][self.col - 2] is \
+                                    None and board.board[self.row][self.col - 3] is None:
                                 if not board.under_attack(self.row, self.col - 1, self.color) and not \
                                         board.under_attack(self.row, self.col - 2, self.color) and not \
                                         board.under_attack(self.row, self.col - 3, self.color):

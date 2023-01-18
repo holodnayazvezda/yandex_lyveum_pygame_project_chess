@@ -1,3 +1,5 @@
+# файл в котором реализуется логика массива шахматной доски
+
 from Pawn import Pawn
 from Rook import Rook
 from Knight import Knight

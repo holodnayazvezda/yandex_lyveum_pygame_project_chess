@@ -1,3 +1,5 @@
+# файл, в котором реализован логика базовой фигуры (класса - родителя всех шахматных фигур)
+
 import pygame
 from config import WHITE, NORMAL_MOVE, TAKE_MOVE, CASTLING_MOVE, PASSED_TAKE_MOVE, CONVERSION_MOVE
 from Move import Move

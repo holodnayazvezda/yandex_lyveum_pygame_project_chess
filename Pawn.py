@@ -1,3 +1,5 @@
+# файл в котором реализуется логика шахматной фигуры "Пешка"
+
 from Figure import Figure
 from config import NORMAL_MOVE, TAKE_MOVE, CONVERSION_MOVE, WHITE, PASSED_TAKE_MOVE
 import King

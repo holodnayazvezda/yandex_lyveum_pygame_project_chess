@@ -1,3 +1,5 @@
+# файл в котором реализуется логика шахматной фигуры "Ладья"
+
 from Figure import Figure
 import King
 from config import NORMAL_MOVE, TAKE_MOVE
